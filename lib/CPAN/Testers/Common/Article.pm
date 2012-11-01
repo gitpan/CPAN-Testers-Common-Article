@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.42';
+$VERSION = '0.43';
 
 #----------------------------------------------------------------------------
 # Library Modules
@@ -47,10 +47,10 @@ my %regexes = (
     # just the date
     4 => { re => qr/(?:\w+,)?\s+(\d+)\s+(\w+)\s+(\d+)/, f => [qw(day month year)] },  # Wed, 13 September 2004
     5 => { re => qr/(\d+)\s+(\w+)\s+(\d+)/,             f => [qw(day month year)] },  # 13 September 2004
-    6 => { re => qr/(\w+)?\s+(\d+),?\s+(\d+)/,          f => [qw(month day year)] },  # September 22, 1999 06:29
+    6 => { re => qr/(\w+)?\s+(\d+),?\s+(\d+)/,          f => [qw(month day year)] },  # September 22, 1999
 );
 
-my $OSNAMES = qr/(cygwin|freebsd|netbsd|openbsd|darwin|linux|cygwin|darwin|MSWin32|dragonfly|solaris|MacOS|irix|mirbsd|gnu|bsdos|aix|sco|os2|haiku)/i;
+my $OSNAMES = qr/(cygwin|freebsd|netbsd|openbsd|darwin|linux|cygwin|darwin|MSWin32|dragonfly|solaris|MacOS|irix|mirbsd|gnu|bsdos|aix|sco|os2|haiku|beos|midnight)/i;
 my %OSNAMES = (
     'MacPPC'    => 'macos',
     'osf'       => 'dec_osf',
@@ -73,6 +73,7 @@ __PACKAGE__->mk_accessors(
         raw cooked header body
         postdate date epoch status from distribution version
         perl osname osvers archname subject author filename
+        osname_patterns osname_fixes
     )
 );
 
@@ -97,6 +98,9 @@ sub new {
     my $subject = $mail->header("Subject");
     return unless $subject;
     return if $subject =~ /::/; # it's supposed to be a distribution
+
+    $self->osname_patterns( $OSNAMES );
+    $self->osname_fixes( \%OSNAMES );
 
     $self->{mail}    = $mail;
     $self->{from}    = $from;
@@ -150,6 +154,7 @@ sub parse_report {
     $platform ||= "";
     $platform =~ s/[\s&,<].*//;
 
+    $distversion ||= "";
     $distversion =~ s!/$!!;
     $distversion =~ s/\.tar.*/.tar.gz/;
     $distversion .= '.tar.gz' unless $distversion =~ /\.(tar|tgz|zip)/;
@@ -164,7 +169,7 @@ sub parse_report {
     my $body = $mail->body;
     $body = decode_base64($body)  if($encoding && $encoding eq 'base64');
 
-    my $perl = $self->_extract_perl_version(\$body,$head);
+    my $perl = $self->_extract_perl_version($body,$head);
 
     my ($osname)   = $body =~ /(?:Summary of my perl5|Platform:).*?osname=([^\s\n,<\']+)/s;
     my ($osvers)   = $body =~ /(?:Summary of my perl5|Platform:).*?osvers=([^\s\n,<\']+)/s;
@@ -184,14 +189,17 @@ sub parse_report {
     }
 
     unless($osname) {
+        my $patterns = $self->osname_patterns;
+        my $fixes = $self->osname_fixes;
+
         for my $text ($platform, $archname) {
             next    unless($text);
-            if($text =~ $OSNAMES) {
+            if($text =~ $patterns) {
                 $osname = $1;
             } else {
-                for my $rx (keys %OSNAMES) {
+                for my $rx (keys %$fixes) {
                     if($text =~ /$rx/i) {
-                        $osname = $OSNAMES{$rx};
+                        $osname = $fixes->{$rx};
                         last;
                     }
                 }
@@ -255,7 +263,7 @@ sub _extract_date {
         }
     }
 
-    return('000000','000000000000',0) unless(@fields && $index);
+    return('000000','000000000000',0) unless($index);
 
     @fields{@{$regexes{$index}->{f}}} = @fields;
 
@@ -285,14 +293,15 @@ sub _extract_perl_version {
     my ($rev, $ver, $sub, $extra);
 
     for my $regex (@perl_extractions) {
-        ($rev, $ver, $sub, $extra) = $$body =~ /$regex/si;
+        ($rev, $ver, $sub, $extra) = $body =~ /$regex/si;
         last    if(defined $rev);
     }
 
     return 0    unless(defined $rev);
 
-    $ver ||= 0;
-    $sub ||= 0;
+    #$ver ||= 0;    # current patterns require ver and sub values
+    #$sub ||= 0;
+
     my $perl = $rev + ($ver / 1000) + ($sub / 1000000);
     $rev = int($perl);
     $ver = int(($perl*1000)%1000);
@@ -420,6 +429,14 @@ Author of uploaded distribution (Upload article only).
 
 File name of uploaded distribution (Upload article only).
 
+=item * osnames_patterns
+
+A regular expression of known operating system coded strings.
+
+=item * osnames_fixes
+
+A hash reference to strings that may have been mangled, and their corrections.
+
 =back
 
 =head1 BUGS, PATCHES & FIXES
@@ -428,7 +445,7 @@ There are no known bugs at the time of this release. However, if you spot a
 bug or are experiencing difficulties, that is not explained within the POD
 documentation, please send bug reports and patches to the RT Queue (see below).
 
-Fixes are dependant upon their severity and my availablity. Should a fix not
+Fixes are dependent upon their severity and my availability. Should a fix not
 be forthcoming, please feel free to (politely) remind me.
 
 RT Queue -
@@ -446,8 +463,9 @@ F<http://wiki.cpantesters.org/>
 =head1 AUTHOR
 
   Original author:    Leon Brocard <acme@astray.com>   (C) 2002-2008
-  Current maintainer: Barbie       <barbie@cpan.org>   (C) 2008-2009
+  Current maintainer: Barbie       <barbie@cpan.org>   (C) 2008-2012
 
 =head1 LICENSE
 
-This code is distributed under the same license as Perl.
+  This module is free software; you can redistribute it and/or
+  modify it under the Artistic Licence v2.
