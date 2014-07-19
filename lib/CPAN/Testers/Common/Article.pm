@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.44';
+$VERSION = '0.45';
 
 #----------------------------------------------------------------------------
 # Library Modules
@@ -463,9 +463,9 @@ F<http://wiki.cpantesters.org/>
 =head1 AUTHOR
 
   Original author:    Leon Brocard <acme@astray.com>   (C) 2002-2008
-  Current maintainer: Barbie       <barbie@cpan.org>   (C) 2008-2012
+  Current maintainer: Barbie       <barbie@cpan.org>   (C) 2008-2014
 
 =head1 LICENSE
 
-  This module is free software; you can redistribute it and/or
-  modify it under the Artistic Licence v2.
+This distribution is free software; you can redistribute it and/or
+modify it under the Artistic License v2.

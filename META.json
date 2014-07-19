@@ -1,6 +1,6 @@
 {
     "name": "CPAN-Testers-Common-Article",
-    "version": "0.44",
+    "version": "0.45",
     "abstract": "Parse a CPAN Testers NNTP article",
     "author": [
         "Barbie (BARBIE) <barbie@cpan.org>",
@@ -50,7 +50,7 @@
     "provides": {
         "CPAN::Testers::Common::Article": {
             "file": "lib/CPAN/Testers/Common/Article.pm",
-            "version": "0.44"
+            "version": "0.45"
         }
     },
     "no_index": {
@@ -58,7 +58,7 @@
     },
 
     "resources": {
-        "license": "http://dev.perl.org/licenses/",
+        "license": "http://www.perlfoundation.org/artistic_license_2_0",
         "bugtracker": { "web": "http://rt.cpan.org/Public/Dist/Display.html?Name=CPAN-Testers-Common-Article" },
         "repository": {
             "url": "git://github.com/barbie/cpan-testers-common-article.git",
