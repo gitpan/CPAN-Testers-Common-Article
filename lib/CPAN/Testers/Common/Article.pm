@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.45';
+$VERSION = '0.46';
 
 #----------------------------------------------------------------------------
 # Library Modules
@@ -86,7 +86,8 @@ sub new {
     $article = decode_qp($article)	if($article =~ /=3D/);
     $self->cooked($article);
 
-    my $mail = Email::Simple->new($article);
+    my $mail;
+    eval { $mail = Email::Simple->new($article) };
     return unless $mail;
 
     $self->header($mail->header_obj());
